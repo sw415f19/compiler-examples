@@ -1,81 +1,127 @@
 grammar ezuino;
-start:      dcls stmts;
-dcls:       dcl*
-        ;
-dcl:        type ID;
+start:              dcls stmts
+                ;
+dcls:               dcl*
+                ;
+dcl:                type ID
+                |   list
+                ;
 
-stmts:      stmt*
-        ;
-stmt:       ID ASSIGN val expr*
-        |   ID ASSIGN NOT? booleantf
-        |   PRINTSTMT val expr*
-        |   if_stmt
-        |   while_stmt
-        |   func
-        |   setup
-        |   loop
-        ;
-expr:       (PLUS val)
-        |   (MINUS val)
-        ;
+// TO BE ADDED : 
+//list 
+
+stmts:              stmt*
+                ;
+
+                // medium := findMedium(testOne, testTwo, testThree, testFour)
+stmt:               ID ASSIGN (val | )  expr*
+                |   ID ASSIGN NOT? booleantf
+                |   PRINTSTMT val expr*
+                |   LISTREMOVE'[' ']'
+                |   LISTADD
+                |   if_stmt
+                |   while_stmt
+                |   func
+                |   switch_stmt
+                |   list_add
+                |   list_remove
+                ;
+
+essential_stmt:     setup
+                |   loop
+                ;
+                
+expr:               (PLUS val)
+                |   (MINUS val)
+                ;
 
 //Mangler at implementere i staements
-logicexpr:      EQUAL
-            |   NOTEQUAL
-            |   LESS
-            |   LESSTHANOREQUAL
-            |   GREATER
-            |   GREATERTHANOREQUAL;
-
+logicexpr:          EQUAL
+                |   NOTEQUAL
+                |   LESS
+                |   LESSTHANOREQUAL
+                |   GREATER
+                |   GREATERTHANOREQUAL
+                ;
 logicoperator:    AND
-                | OR;                        
+                | OR
+                ;
+condition:          booleanexpr (logicoperator booleanexpr)*
+                |   booleantf
+                ;
+booleanexpr:        val logicexpr val
+                ; 
+val:                ID
+                |   INTEGER
+                |   DOUBLE
+                |   STRING
+                ;
+type:               INTDCL
+                |   DOUBLEDCL
+                |   BOOLDCL
+                |   STRINGDCL
+                ;
+booleantf:          TRUE
+                |   FALSE
+                ;
+list_id:             ID
+                ;
+list_size:           '['INTEGER']'
+                ;
 
-condition:        booleanexpr (logicoperator booleanexpr)*
-                | booleantf;
-            
+switch_stmt:        SWITCH '(' val ')' block_switch
+                ;
 
-booleanexpr:   val logicexpr val; 
+return_stmt:        RETURN val
+                ;
 
-val:        ID
-        |   INTEGER
-        |   DOUBLE
-        |   STRING
-        ;
+if_stmt:            IF'(' condition ')' block
+                ;
+while_stmt:         WHILE'(' condition ')' block
+                ;  
 
-type:    INTDCL
-        | DOUBLEDCL
-        | BOOLDCL
-        | STRINGDCL;
+parameters:         '(' param?(',' param)* ')'
+                ;
+param:              type ID
+                ;
 
-booleantf:        TRUE
-                | FALSE
-        ;
+func:               FUNCTION type? ID parameters block_func
+                ;
 
-if_stmt:     IF'(' condition ')' block;
-while_stmt:  WHILE'(' condition ')' block;  
+setup:              FUNCTION 'setup()' block
+                ;
+loop:               FUNCTION 'loop()' block
+                ;
 
-parameters: '(' param?(',' param)* ')';
-param:  type ID;
+block:              SBRACE dcls stmts EBRACE
+                ;
+block_func:         SBRACE dcls stmts return_stmt?   EBRACE
+                ; 
+block_switch:       SBRACE (CASE val(',' val)*':' block_func)* (DEFAULT':' block_func)? EBRACE
+                ;
+list:               LISTDCL type list_id list_size ASSIGN '('(val','?)*')' 
+                ;
 
-func: 'func' type? ID parameters block;
+list_add:           LISTADD'('ID ',' val ',' INTEGER')'
+                ;   
 
-setup: 'func setup()' block;
-loop:  'func loop()' block;
+list_remove:        LISTREMOVE'('ID ',' val ',' INTEGER')'
+                ;
 
-
-block: SBRACE dcls stmts EBRACE;
-
-// DCL's
+// DECLARATIONS
 INTDCL              : 'int' ;
 DOUBLEDCL           : 'double' ;
 STRINGDCL           : 'string' ;
 BOOLDCL             : 'boolean' ;
+LISTDCL             : 'list' ;
 
-// STMTS
-PRINTSTMT            : 'print' ;
+// STATEMENTS
+PRINTSTMT           : 'print' ;
 ASSIGN              : ':=' ;
+LISTADD             : 'list_add' ;
+LISTREMOVE          : 'list_remove' ;
 
-//OP
+// OPERATORS
 PLUS                : '+' ;
 MINUS               : '-' ;
 DIVIDE              : '/' ;
@@ -92,24 +138,29 @@ NOT                 : '!';
 LESSTHANOREQUAL     : '<=' ;
 GREATERTHANOREQUAL  : '>=' ;
 
-// CONDITIONAL
+// CONDITIONALS
 ELSE                : 'else' ;
-IF                  : 'if';
-WHILE               : 'while';
+IF                  : 'if' ;
+WHILE               : 'while' ;
 TRUE                : 'TRUE' ;
 FALSE               : 'FALSE' ;
+SWITCH              : 'switch' ;
+CASE                : 'case' ;
+RETURN              : 'return' ;
+FUNCTION            : 'func' ;
+DEFAULT             : 'default' ;
 
-// ID
-ID                  : [a-zA-Z]+[a-zA-Z0-9]*;
-SBRACE              : '{';
-EBRACE              : '}';
+
+
+// IDENTIFIERS
+ID                  : [a-zA-Z]+[a-zA-Z0-9]* ;
+SBRACE              : '{' ;
+EBRACE              : '}' ;
 
 // DATA TYPES
-INTEGER            : [0-9]+ ;
+INTEGER             : [0-9]+ ;
 DOUBLE              : [0-9]+'.'[0-9]+ ;
-STRING
- : '"' (~["\r\n] | '""')* '"'
- ;
+STRING              : '"' (~["\r\n] | '""')* '"' ;
 
 // EXTRA
 BLANK               : [ \t\r\n]+ -> skip ;
