@@ -1,5 +1,5 @@
 grammar ezuino;
-start:              dcls stmts
+start:             dcls stmts
                 ;
 dcls:               dcl*
                 ;
@@ -7,19 +7,21 @@ dcl:                type ID
                 |   list
                 ;
 
+
+ 
 // TO BE ADDED : 
 //list 
 
 stmts:              stmt*
                 ;
 
-                // medium := findMedium(testOne, testTwo, testThree, testFour)
-stmt:               ID ASSIGN (val | )  expr*
+stmt:               ID ASSIGN expr
+                |   func_call
                 |   ID ASSIGN NOT? booleantf
-                |   PRINTSTMT val expr*
+                |   print_l
                 |   LISTREMOVE'[' ']'
                 |   LISTADD
-                |   if_stmt
+                |   if_else
                 |   while_stmt
                 |   func
                 |   switch_stmt
@@ -27,29 +29,40 @@ stmt:               ID ASSIGN (val | )  expr*
                 |   list_remove
                 ;
 
-essential_stmt:     setup
-                |   loop
-                ;
-                
-expr:               (PLUS val)
-                |   (MINUS val)
+func:               FUNCTION type? ID parameters block_func
                 ;
 
+func_call:   ID'('(val? | val(',' val)+)')'
+                ;
+
+expr: val 
+|   func_call
+|   expr PLUS expr
+|   expr MINUS expr
+|   expr MULTIPLE expr
+|   expr DIVIDE expr
+|   '(' expr ')'
+;
+
+print_l : PRINTSTMT expr;
+
 //Mangler at implementere i staements
-logicexpr:          EQUAL
+comparator_operator:      EQUAL
                 |   NOTEQUAL
                 |   LESS
                 |   LESSTHANOREQUAL
                 |   GREATER
                 |   GREATERTHANOREQUAL
                 ;
-logicoperator:    AND
+logic_operator:    AND
                 | OR
                 ;
-condition:          booleanexpr (logicoperator booleanexpr)*
+
+
+condition:          boolean_expr (logic_operator boolean_expr)*
                 |   booleantf
                 ;
-booleanexpr:        val logicexpr val
+boolean_expr:        val comparator_operator val
                 ; 
 val:                ID
                 |   INTEGER
@@ -72,25 +85,21 @@ list_size:           '['INTEGER']'
 switch_stmt:        SWITCH '(' val ')' block_switch
                 ;
 
-return_stmt:        RETURN val
+return_stmt:        RETURN expr  
                 ;
 
-if_stmt:            IF'(' condition ')' block
-                ;
+if_stmt:            IF'(' condition ')' block;
+
+else_stmt:          ELSE block;
+
+if_else:            if_stmt+ else_stmt?;
+                
 while_stmt:         WHILE'(' condition ')' block
                 ;  
 
 parameters:         '(' param?(',' param)* ')'
                 ;
 param:              type ID
-                ;
-
-func:               FUNCTION type? ID parameters block_func
-                ;
-
-setup:              FUNCTION 'setup()' block
-                ;
-loop:               FUNCTION 'loop()' block
                 ;
 
 block:              SBRACE dcls stmts EBRACE
@@ -161,7 +170,6 @@ EBRACE              : '}' ;
 INTEGER             : [0-9]+ ;
 DOUBLE              : [0-9]+'.'[0-9]+ ;
 STRING              : '"' (~["\r\n] | '""')* '"' ;
-
 // EXTRA
 BLANK               : [ \t\r\n]+ -> skip ;
 COMMENT             : '#' ~[\r\n]*-> skip ;
