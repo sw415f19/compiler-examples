@@ -15,7 +15,7 @@ dcl:                type ID
 stmts:              stmt*
                 ;
 
-stmt:               ID ASSIGN expr
+stmt:               ID ASSIGN expr*
                 |   func_call
                 |   ID ASSIGN NOT? booleantf
                 |   print_l
@@ -29,10 +29,10 @@ stmt:               ID ASSIGN expr
                 |   list_remove
                 ;
 
-func:               FUNCTION type? ID parameters block_func
+func:               FUNCTION type? ID parameters block
                 ;
 
-func_call:   ID'('(val? | val(',' val)+)')'
+func_call:   ID'('(expr? | expr(',' expr)+)')'
                 ;
 
 expr: val 
@@ -85,7 +85,7 @@ list_size:           '['INTEGER']'
 switch_stmt:        SWITCH '(' val ')' block_switch
                 ;
 
-return_stmt:        RETURN expr  
+return_stmt:        RETURN expr
                 ;
 
 if_stmt:            IF'(' condition ')' block;
@@ -102,11 +102,9 @@ parameters:         '(' param?(',' param)* ')'
 param:              type ID
                 ;
 
-block:              SBRACE dcls stmts EBRACE
+block:              SBRACE dcls stmts return_stmt? EBRACE
                 ;
-block_func:         SBRACE dcls stmts return_stmt?   EBRACE
-                ; 
-block_switch:       SBRACE (CASE val(',' val)*':' block_func)* (DEFAULT':' block_func)? EBRACE
+block_switch:       SBRACE (CASE val(',' val)*':' block)* (DEFAULT':' block)? EBRACE
                 ;
 list:               LISTDCL type list_id list_size ASSIGN '('(val','?)*')' 
                 ;
